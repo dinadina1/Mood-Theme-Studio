@@ -11,7 +11,7 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:moodBasedThemeChanger.setTheme"
+    "*"
   ],
   "main": "./extension.js",
   "contributes": {
