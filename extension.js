@@ -1,5 +1,9 @@
-
-
+/*
+character count per 20 seconds
+Focused - >30
+tired - <10
+neutral - 10 - 30
+*/
 const vscode = require('vscode');
 let typingSpeedTracker, moodState = 'neutral', themeConfig, autoMoodDetectionEnabled = true;
 let customThemes = {}; // Object to hold custom theme colors
@@ -16,7 +20,7 @@ class TypingSpeedTracker {
 		const now = Date.now();
 		const interval = now - this.lastTypingTime;
 
-		if (interval < 5000) {
+		if (interval < 30000) {
 			this.typingIntervals.push(interval);
 			if (this.typingIntervals.length > 10) 
 				this.typingIntervals.shift();
@@ -33,25 +37,39 @@ class TypingSpeedTracker {
 
 		return 6000 / averageInterval; // convert ms to chars/min
 	}
+
+	// Add reset method
+	reset() {
+		this.lastTypingTime = Date.now();
+		this.typingIntervals = [];
+	}
 }
 
 // Detect mood based on typing speed
 function detectMood(typingSpeed) {
-	if (typingSpeed > 50) return 'focused';
-	if (typingSpeed < 10) return 'tired';
-	return 'neutral';
+	if (typingSpeed >= 30) return 'focused';    // Default Dark Modern
+	if (typingSpeed < 10) return 'tired';       // Default Light Modern
+	return 'neutral';                           // Dark+
 }
 
 // Change the VS code theme based on detected mood
 function setThemeByMood(mood) {
-	let theme = themeConfig.get('neutralTheme');
-
-	if (mood === 'focused') {
-		theme = themeConfig.get('focusedTheme');
-	} else if (mood === 'tired') {
-		theme = themeConfig.get('tiredTheme');
+	let theme;
+	
+	switch(mood) {
+		case 'focused':
+			theme = 'Default Dark Modern';
+			break;
+		case 'tired':
+			theme = 'Default Light Modern';
+			break;
+		default: // neutral
+			theme = 'Default Dark+';
+			break;
 	}
+	
 	vscode.workspace.getConfiguration().update('workbench.colorTheme', theme, vscode.ConfigurationTarget.Global);
+	typingSpeedTracker.reset(); // Reset timing after theme change
 }
 
 // Update mood and theme every interval if autoMoodDetection is enabled
@@ -60,11 +78,14 @@ function updateMoodAndTheme() {
 
 	const typingSpeed = typingSpeedTracker.typingSpeed;
 	const detectedMood = detectMood(typingSpeed);
+    console.log(detectedMood);  
+    console.log(typingSpeed);
+    
 
-	if (detectedMood !== moodState) {
+	// if (detectedMood !== moodState) {
 		moodState = detectedMood;
 		setThemeByMood(moodState);
-	}
+	// }
 }
 
 // Function to apply custom theme colors
@@ -142,6 +163,7 @@ async function showFeatureMenu() {
 		if (moodChoice) {
 			autoMoodDetectionEnabled = false;
 			vscode.window.showInformationMessage('Auto Mood Detection disabled due to manual theme selection');
+			typingSpeedTracker.reset(); // Reset timing after manual selection
 
 			if (moodChoice === 'Neutral Theme') {
 				setThemeByMood('neutral');
@@ -164,6 +186,7 @@ async function showFeatureMenu() {
 		if (themeChoice) {
 			autoMoodDetectionEnabled = false;
 			vscode.window.showInformationMessage('Auto Mood Detection disabled due to manual theme selection');
+			typingSpeedTracker.reset(); // Reset timing after system theme selection
 			await vscode.workspace.getConfiguration().update(
 				'workbench.colorTheme',
 				themeChoice.description,
@@ -382,11 +405,6 @@ function getWebviewContent() {
                 font: '#cccccc'
             };
 
-            // Add event listeners to color inputs
-            document.querySelectorAll('input[type="color"]').forEach(input => {
-                input.addEventListener('input', updatePreview);
-            });
-
             function applyColors() {
                 const colors = {
                     background: document.getElementById('background').value,
@@ -397,7 +415,6 @@ function getWebviewContent() {
                 };
                 vscode.postMessage({ command: 'applyColors', colors });
             }
-
         </script>
     </body>
     </html>`;
