@@ -26,7 +26,7 @@ class TypingSpeedTracker {
 				this.typingIntervals.shift();
 		}
 
-		this.lastTypingTime = now;
+		this.lastTypingTime = now; 
 	}
 
 	// Get average typing speed (characters per minute)
@@ -78,14 +78,14 @@ function updateMoodAndTheme() {
 
 	const typingSpeed = typingSpeedTracker.typingSpeed;
 	const detectedMood = detectMood(typingSpeed);
-    console.log(detectedMood);  
-    console.log(typingSpeed);
-    
-
-	// if (detectedMood !== moodState) {
+	
+	if (detectedMood !== moodState) {
 		moodState = detectedMood;
 		setThemeByMood(moodState);
-	// }
+	}
+
+	// Reset typing speed tracker after checking mood
+	typingSpeedTracker.reset();
 }
 
 // Function to apply custom theme colors
@@ -434,7 +434,7 @@ function activate(context) {
 	// Schedule mood-based theme updates if autoMoodDetection is enabled
 	setInterval(() => {
 		updateMoodAndTheme();
-	}, 20000); // 20 seconds
+	}, 30000); // 30 seconds
 
 	// Command to show feature menu
 	const manualThemeChange = vscode.commands.registerCommand('moodBasedThemeChanger.showFeatureMenu', showFeatureMenu);
